@@ -182,8 +182,8 @@ def test_cli_interactive_no_instruction_panel():
         assert result.exit_code == 0
         # Interactive mode should not show the instruction panel
         # (REPL will handle its own UI)
-
-
+        mock_repl.assert_called_once()
+        assert "Instruction" not in result.output
 @pytest.mark.asyncio
 async def test_streaming_with_tool_calls():
     """Test streaming output followed by tool calls."""
