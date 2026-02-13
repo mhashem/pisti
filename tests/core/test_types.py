@@ -56,9 +56,9 @@ def test_llm_response_is_final_answer():
     )
     assert resp2.is_final_answer is False
 
-    # Not final: no content
+    # Is final: no content but done and no tool calls
     resp3 = LLMResponse(message=Message(role="assistant", content=""))
-    assert resp3.is_final_answer is False
+    assert resp3.is_final_answer is True
 
 
 def test_agent_result_defaults():

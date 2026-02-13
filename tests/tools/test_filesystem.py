@@ -21,7 +21,7 @@ async def test_write_and_read(base_dir):
     reader = ReadFileTool(base_dir=base_dir)
 
     result = await writer.execute(path="hello.txt", content="Hello, world!")
-    assert "Successfully wrote" in result
+    assert "Successfully wrote" in result.content
 
     content = await reader.execute(path="hello.txt")
     assert content == "Hello, world!"
@@ -31,7 +31,7 @@ async def test_write_and_read(base_dir):
 async def test_write_creates_parents(base_dir):
     writer = WriteFileTool(base_dir=base_dir)
     result = await writer.execute(path="sub/dir/file.py", content="print('hi')")
-    assert "Successfully wrote" in result
+    assert "Successfully wrote" in result.content
     assert (base_dir / "sub" / "dir" / "file.py").exists()
 
 

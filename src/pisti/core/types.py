@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -48,6 +49,7 @@ class ToolResult(BaseModel):
     tool_call_id: str
     name: str
     content: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class LLMResponse(BaseModel):
@@ -57,8 +59,8 @@ class LLMResponse(BaseModel):
 
     @property
     def is_final_answer(self) -> bool:
-        """True when the LLM produced text with no tool calls."""
-        return self.done and not self.message.tool_calls and bool(self.message.content)
+        """True when the LLM is done and produced no tool calls."""
+        return self.done and not self.message.tool_calls
 
 
 class AgentResult(BaseModel):

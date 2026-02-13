@@ -45,4 +45,14 @@ class ContextWindowManager:
 
     @staticmethod
     def _char_count(messages: list[Message]) -> int:
-        return sum(len(m.content) for m in messages)
+        count = 0
+        for m in messages:
+            count += len(m.content)
+            if m.tool_call_id:
+                count += len(m.tool_call_id)
+            for tc in m.tool_calls:
+                count += len(tc.id)
+                count += len(tc.function.name)
+                # Approximation for arguments JSON
+                count += len(str(tc.function.arguments))
+        return count

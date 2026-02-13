@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .base import BaseTool
+from .base import BaseTool, ToolOutput
 
 MAX_READ_CHARS = 50_000
 
@@ -83,16 +83,19 @@ class WriteFileTool(_FsTool):
             "required": ["path", "content"],
         }
 
-    async def execute(self, **kwargs: Any) -> str:
+    async def execute(self, **kwargs: Any) -> ToolOutput:
         path_str = kwargs.get("path", "")
         content = kwargs.get("content", "")
         try:
             resolved = self._safe_path(path_str)
             resolved.parent.mkdir(parents=True, exist_ok=True)
             resolved.write_text(str(content))
-            return f"Successfully wrote {len(str(content))} chars to {path_str}"
+            return ToolOutput(
+                content=f"Successfully wrote {len(str(content))} chars to {path_str}",
+                metadata={"files_modified": [path_str]},
+            )
         except Exception as e:
-            return f"Error writing {path_str}: {e}"
+            return ToolOutput(content=f"Error writing {path_str}: {e}")
 
 
 class ListDirectoryTool(_FsTool):

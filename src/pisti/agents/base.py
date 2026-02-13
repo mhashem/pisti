@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pisti.agents.events import AgentEventHandler, NullEventHandler
 from pisti.core.errors import MaxIterationsError
-from pisti.core.types import AgentResult, LLMResponse, Message, ToolResult
+from pisti.core.types import AgentResult, LLMResponse, Message, ToolCall, ToolResult
 from pisti.llm.base import LLMProvider
 from pisti.llm.context import ContextWindowManager
 from pisti.tools.base import ToolRegistry
@@ -79,6 +79,7 @@ class BaseAgent(ABC):
         """Stream LLM response, emitting tokens via the event handler."""
         self.event_handler.on_llm_start()
         accumulated_content = ""
+        accumulated_tool_calls: list[ToolCall] = []
         last_response: LLMResponse | None = None
 
         async for chunk in self.llm.chat_stream(messages, tools=tools):
@@ -86,6 +87,13 @@ class BaseAgent(ABC):
             if token:
                 accumulated_content += token
                 self.event_handler.on_token(token)
+
+            if chunk.message.tool_calls:
+                for tc in chunk.message.tool_calls:
+                    # Check if we already have this tool call ID (some providers might resend)
+                    if not any(a.id == tc.id for a in accumulated_tool_calls):
+                        accumulated_tool_calls.append(tc)
+
             last_response = chunk
 
         if last_response is None:
@@ -93,11 +101,11 @@ class BaseAgent(ABC):
                 message=Message(role="assistant", content="")
             )
 
-        # Merge accumulated content with the final chunk's tool_calls
+        # Merge accumulated content and tool calls
         final_message = Message(
             role="assistant",
             content=accumulated_content,
-            tool_calls=last_response.message.tool_calls,
+            tool_calls=accumulated_tool_calls,
         )
         response = LLMResponse(
             message=final_message,
@@ -119,13 +127,6 @@ class BaseAgent(ABC):
             messages.append(response.message)
 
             if response.is_final_answer:
-                return AgentResult(
-                    summary=response.message.content,
-                    files_modified=list(set(self.files_modified)),
-                    iterations=iteration,
-                )
-
-            if not response.message.tool_calls:
                 return AgentResult(
                     summary=response.message.content or "(no response)",
                     files_modified=list(set(self.files_modified)),
@@ -159,15 +160,21 @@ class BaseAgent(ABC):
                 content=f"Error: unknown tool '{name}'",
             )
 
-        result_str = await tool.execute(**arguments)
+        output = await tool.execute(**arguments)
+        if isinstance(output, str):
+            content = output
+            metadata = {}
+        else:
+            content = output.content
+            metadata = output.metadata
 
-        if name == "write_file" and not result_str.startswith("Error"):
-            path = arguments.get("path", "")
-            if isinstance(path, str) and path:
-                self.files_modified.append(path)
+        # Handle file modifications via metadata
+        if "files_modified" in metadata:
+            self.files_modified.extend(metadata["files_modified"])
 
         return ToolResult(
             tool_call_id=call_id,
             name=name,
-            content=result_str,
+            content=content,
+            metadata=metadata,
         )
