@@ -11,7 +11,7 @@ Comprehensive end-to-end test suite implemented for the new interactive streamin
 ## Test Coverage by Feature
 
 ### 1. RichEventHandler UI Tests (16 tests)
-**File:** `/Users/mahmoud.hachem/sandbox/pisti/tests/cli/test_ui.py`
+**File:** `tests/cli/test_ui.py`
 
 Tests the Rich-based event handler for streaming CLI output with colors and formatting.
 
@@ -44,7 +44,7 @@ handler.on_tool_end(tool_call, result)
 ```
 
 ### 2. Interactive CLI E2E Tests (21 tests)
-**File:** `/Users/mahmoud.hachem/sandbox/pisti/tests/integration/test_interactive_cli.py`
+**File:** `tests/integration/test_interactive_cli.py`
 
 End-to-end tests for CLI commands with streaming and interactive mode.
 
@@ -82,7 +82,7 @@ mock_repl.assert_called_once()
 ```
 
 ### 3. REPL E2E Tests (15 tests)
-**File:** `/Users/mahmoud.hachem/sandbox/pisti/tests/integration/test_repl_e2e.py`
+**File:** `tests/integration/test_repl_e2e.py`
 
 End-to-end tests for REPL mode with multi-turn conversations.
 
