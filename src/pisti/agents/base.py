@@ -90,7 +90,8 @@ class BaseAgent(ABC):
 
             if chunk.message.tool_calls:
                 for tc in chunk.message.tool_calls:
-                    # Check if we already have this tool call ID (some providers might resend)
+                    # Check if we already have this tool call ID
+                    # (some providers might resend)
                     if not any(a.id == tc.id for a in accumulated_tool_calls):
                         accumulated_tool_calls.append(tc)
 
